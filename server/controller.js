@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Sequelize = require('sequelize');
-const connectionString = '<https://bit.io/jackfletcher22/data_assessment?tab=Data>';
+const connectionString = '<postgresql://jackfletcher22:v2_44L28_vnUwbzyrqpqjBH7xRpucKE6@db.bit.io:5432/jackfletcher22/data_assessment>';
 const sequelize = new Sequelize(connectionString, {
     dialect: 'postgres',
     dialectOptions: {
@@ -10,23 +10,61 @@ const sequelize = new Sequelize(connectionString, {
     }
   });
 
+  function getCountries(req, res) {
+    sequelize.query('SELECT * FROM countries', { type: sequelize.QueryTypes.SELECT })
+      .then((dbRes) => {
+        res.status(200).send(dbRes[0])
+     })
+      .catch((error) => {
+        console.error('Error fetching countries:', error);
+        res.status(500).json({ error: 'An error occurred while fetching countries.' });
+      });
+  }
+
+  module.exports = {
+    getCountries
+  };
+
+
+function createCity(req, res) {
+    const { name, rating, countryId } = req.body;
+  
+    const insertQuery = `
+      INSERT INTO cities (name, rating, country_id)
+      VALUES ('${name}', ${rating}, ${countryId})
+      RETURNING *;
+    `;
+  
+    sequelize.query(insertQuery, { type: sequelize.QueryTypes.INSERT })
+      .then((dbRes) => {
+        res.status(200).send(dbRes[0]);
+      })
+      .catch((error) => {
+        console.error('Error creating city:', error);
+        res.status(500).json({ error: 'An error occurred while creating the city.' });
+      });
+  }
+  module.exports= {
+    getCountries
+  };
 
 module.exports = {
     seed: (req, res) => {
         sequelize.query(`
-            drop table if exists cities;
+        drop table if exists cities;
             drop table if exists countries;
 
             create table countries (
                 country_id serial primary key, 
                 name varchar
             );
-CREATE TABLE cities(
-    city_id: SERIAL PRIMARY KEY,
-    name: VARCHAR,
-    rating: INTEGER,
-    country_id: INTEGER
-);
+            CREATE TABLE cities (
+                city_id SERIAL PRIMARY KEY,
+                name VARCHAR,
+                rating INTEGER,
+                country_id INTEGER REFERENCES countries(country_id)
+              );
+              
 
             insert into countries (name)
             values ('Afghanistan'),
