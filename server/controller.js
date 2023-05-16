@@ -21,32 +21,55 @@ const sequelize = new Sequelize(connectionString, {
       });
   }
 
-  module.exports = {
-    getCountries
-  };
+  function deleteCity(req,res) {
+    const { id } =req.params;
 
+    const deleteQuery = `
+    DELETE FROM cities
+    WHERE city_id = ${id}
+    RETURNING *;
+  `;
 
-function createCity(req, res) {
-    const { name, rating, countryId } = req.body;
+    sequelize.quer(deleteQuery, { type: sequelize.QueryTypes.DELETE})
+    .then((dbRes) => {
+        res.status(200).send(dbRes[0]);
+    }) 
+    .catch((error) => {
+        console.error('Error deleting city:', error);
+        res.status(500).json({error:'An error occured while deleting the city.'});
+    })   
+  }
   
-    const insertQuery = `
+  function createCity(req, res) {
+      const { name, rating, countryId } = req.body;
+      
+      const insertQuery = `
       INSERT INTO cities (name, rating, country_id)
       VALUES ('${name}', ${rating}, ${countryId})
       RETURNING *;
-    `;
-  
-    sequelize.query(insertQuery, { type: sequelize.QueryTypes.INSERT })
+      `;
+      
+      sequelize.query(insertQuery, { type: sequelize.QueryTypes.INSERT })
       .then((dbRes) => {
-        res.status(200).send(dbRes[0]);
-      })
-      .catch((error) => {
-        console.error('Error creating city:', error);
-        res.status(500).json({ error: 'An error occurred while creating the city.' });
-      });
-  }
-  module.exports= {
-    getCountries
-  };
+          res.status(200).send(dbRes[0]);
+        })
+        .catch((error) => {
+            console.error('Error creating city:', error);
+            res.status(500).json({ error: 'An error occurred while creating the city.' });
+        });
+    }
+    module.exports= {
+        getCountries
+    };
+    module.exports = {
+        createCity
+    };
+    module.exports = {
+      getCountries
+    };
+    module.exports = {
+        deleteCity
+    };
 
 module.exports = {
     seed: (req, res) => {
